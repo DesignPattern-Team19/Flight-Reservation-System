@@ -85,6 +85,7 @@ class Proxy_server(server):
     def cancel_flight(self, booking_reference):
         return self.airlines_server.cancel_flight(booking_reference)
 
+# 본 서버
 # 읽지 않아도 되는 클래스
 class AsianaAir_server:
     gen_reference_number = 0
