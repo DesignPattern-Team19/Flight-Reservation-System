@@ -173,11 +173,11 @@ class KoreanAir_server:
 class JejuAir_server:
 '''
 
-
-BASE_DIR = "C:\\Users\\odh30\\OneDrive\\바탕 화면\\flight_reservation_system\\data\\"
+DATA_DIR = ".\\data\\"
+asiana_schedule = DATA_DIR + "asiana_air_flight_schedule (24.7.1 ~ 24.7.10).xlsx"
 
 asiana_air_server = AsianaAir_server()
-asiana_air_server.import_flight_schedule_from_xlsx(BASE_DIR + "asiana_air_flight_schedule (24.7.1 ~ 24.7.10).xlsx")
+asiana_air_server.import_flight_schedule_from_xlsx(asiana_schedule)
 
 '''
 flight_id, info = asiana_air_server.check_flight_schedule_one_way("2024-07-04", "인천(ICN)", "로마(FCO)")
