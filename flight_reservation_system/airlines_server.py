@@ -239,7 +239,6 @@ t_or_f, booking_reference = proxy_server.book_flight(flight_id1, flight_id2, 2, 
 print("예약 성공 여부 : ", str(t_or_f))
 print("예약 번호 : ", str(booking_reference))
 
-
 # 예약 취소
 t_or_f = proxy_server.cancel_flight(booking_reference)
 
