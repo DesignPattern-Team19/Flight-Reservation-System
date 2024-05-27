@@ -78,7 +78,7 @@ def main():
     ticket = builder.build()
     print("\n티켓 상세 정보:")
     print(ticket)
-
+#
 
 if __name__ == "__main__":
     main()
