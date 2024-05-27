@@ -58,7 +58,7 @@ class Proxy_server(server):
             return list(df.index), df.to_dict('records')
         
         else:
-            print("loading from original server")
+            print("loading from main server")
             return self.airlines_server.check_flight_schedule_one_way(departure_date, departing_from, arriving_at)
 
     # 왕복편 조회 함수
@@ -70,11 +70,11 @@ class Proxy_server(server):
 
             # 반환값 고민중..
         else:
-            print("loading from original server")
+            print("loading from main server")
             self.airlines_server.check_flight_schedule_round_trip(departure_date, return_date, departing_from, arriving_at)
 
     # 항공편 예약 함수
-    # 입력 : "out_bound_flight_id" = 가는 항공편의 id, "in_bound_flight_id" = 오는 항공편의 id, "passengers_info" = 승객 정보, "payment_method_or_agencyID" = 결제 수단'
+    # 입력 : "out_bound_flight_id" = 가는 항공편의 id, "in_bound_flight_id" = 오는 항공편의 id, "passenger_count" = 승객 수, "passengers_info" = 승객 정보, "payment_method_or_agencyID" = 결제 수단'
     # 반환 : ( 예약 성공 여부, 예약 번호(booking_reference) ) - tuple 형태로 반환
     def book_flight(self, out_bound_flight_id, in_bound_flight_id, passenger_count, passengers_info, payment_method_or_agencyID):
         return self.airlines_server.book_flight(out_bound_flight_id, in_bound_flight_id, passenger_count, passengers_info, payment_method_or_agencyID)
