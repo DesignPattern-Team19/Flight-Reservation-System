@@ -223,12 +223,22 @@ for i in range(info_count):
 # proxy_server.check_flight_schedule_round_trip("2024-07-04", "2024-07-05", "인천(ICN)", "로마(FCO)") 
 
 # 예약
-flight_id = flight_ids1[0]
+flight_id1 = flight_ids1[0]
+flight_id2 = flight_ids2[2]
 passengers_info = [("Billy", "M", "1974-08-17"), ("watson", "M", "1960-04-19")]
-t_or_f, booking_reference = proxy_server.book_flight(flight_id, None, 2, passengers_info, "goodtrip")
+
+# 편도 에약
+t_or_f, booking_reference = proxy_server.book_flight(flight_id1, None, 2, passengers_info, "goodtrip")
 
 print("예약 성공 여부 : ", str(t_or_f))
 print("예약 번호 : ", str(booking_reference))
+
+# 왕복 예약
+t_or_f, booking_reference = proxy_server.book_flight(flight_id1, flight_id2, 2, passengers_info, "goodtrip")
+
+print("예약 성공 여부 : ", str(t_or_f))
+print("예약 번호 : ", str(booking_reference))
+
 
 # 예약 취소
 t_or_f = proxy_server.cancel_flight(booking_reference)
