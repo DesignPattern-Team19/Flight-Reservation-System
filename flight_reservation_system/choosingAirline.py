@@ -62,13 +62,6 @@ if flights:
     print("예약 성공 여부: ", str(t_or_f))
     print("예약 번호: ", str(booking_reference))
 
-    # 예약 실패 시 디버깅 정보 출력
-    if not t_or_f:
-        print("예약 실패: 항공사 서버에서 예약을 처리할 수 없습니다. 입력 데이터를 확인하세요.")
-        print(f"Flight ID: {selected_flight[0]}")
-        print(f"Airline: {selected_flight[2]}")
-        print(f"Passengers Info: {passengers_info}")
-
     # 예약 취소 함수
     def cancel_flight(booking_reference, airline):
         if airline == "Asiana Airlines":
