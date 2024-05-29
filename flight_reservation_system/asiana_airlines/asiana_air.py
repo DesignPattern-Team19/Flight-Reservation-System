@@ -17,6 +17,10 @@ class server(metaclass = ABCMeta):
         pass
 
     @abstractmethod
+    def check_reservation(self, booking_reference):
+        pass
+
+    @abstractmethod
     def cancel_flight(self, booking_reference):
         pass
     
@@ -79,6 +83,13 @@ class Proxy_server(server):
     # 반환 : ( 예약 성공 여부, 예약 번호(booking_reference) ) - tuple 형태로 반환
     def book_flight(self, out_bound_flight_id, in_bound_flight_id, passenger_count, passengers_info, payment_method_or_agencyID):
         return self.airlines_server.book_flight(out_bound_flight_id, in_bound_flight_id, passenger_count, passengers_info, payment_method_or_agencyID)
+    
+    # 예약 조회 함수
+    # 입력 : 예약 번호(booking_reference)
+    # 반환 : (예약 정보, 탑승객 정보, 결제 정보) - tuple 형태로 반환
+    # tuple의 각 정보는 dict형태로 제공되며, dict를 보기좋게, dataframe으로 변경하는 방법은 test 코드를 참고하라.
+    def check_reservation(self, booking_reference):
+        return self.airlines_server.check_reservation(booking_reference)
 
     # 항공편 취소 함수
     # 입력 : 예약 번호(booking_reference)
@@ -90,10 +101,12 @@ class Proxy_server(server):
 # 읽지 않아도 되는 클래스
 class AsianaAir_server:
     gen_reference_number = 0
+    supported_agency = ["와이페이모어", "하나투어"]
 
     def __init__(self):
         self.flight_schedule = None
-        self.book_list = pd.DataFrame(columns = ["Reservation date", "Booking reference", "Out_bound_flight_id", "In_bound_flight_id", "Total price", "Payment method"])
+        self.book_list = pd.DataFrame(columns = ["Reservation date", "Booking reference", "Out_bound_flight_id", "In_bound_flight_id"])
+        self.payment_info = pd.DataFrame(columns = ["Booking reference", "Payment method", "Owner name", "Card id", "Total price"]) 
         self.peoples_list = pd.DataFrame(columns = ["Booking reference", "Name", "Gender", "Date of birth" ])
 
     # 엑셀 데이터를 로드해 서버내에 저장
@@ -129,7 +142,7 @@ class AsianaAir_server:
         # 반환값 고민중..
 
     # 예약
-    def book_flight(self, out_bound_flight_id, in_bound_flight_id, passenger_count, passengers_info, payment_method_or_agencyID):
+    def book_flight(self, out_bound_flight_id, in_bound_flight_id, passenger_count, passengers_info, card_or_agencyID):
         if (out_bound_flight_id == None or len(passengers_info) != passenger_count):
             return False, None
         
@@ -156,14 +169,29 @@ class AsianaAir_server:
         # 예약이 가능할 경우, 승객 수 x 가격을 계산해 출력함,
         total_price = total_price * passenger_count
 
-        # 결제 성공 여부 확인
-        
-        # 예약 명단 update
+        # 임의 정보
         now_date = "2024-07-01"
         booking_reference = self.gen_reference_number
 
-        # [[now_date, self.gen_reference_number, out_bound_flight_id, in_bound_flight_id, total_price, payment_method_or_agencyID]], columns = ["Reservation date", "Booking reference", "Out_bound_flight_id", "In_bound_flight_id", "Total price", "Payment method"]
-        new = pd.DataFrame({"Reservation date" : [now_date], "Booking reference" : [booking_reference], "Out_bound_flight_id" : [out_bound_flight_id], "In_bound_flight_id" : [in_bound_flight_id], "Total price" : [total_price], "Payment method" : [payment_method_or_agencyID]})  
+        # 결제 성공 여부 확인
+        if (card_or_agencyID in self.supported_agency):
+            # 대행사의 신용 결제
+            new = pd.DataFrame({"Booking reference" : [booking_reference], "Payment method" : ["Agency"], "Owner name" : [card_or_agencyID], "Card id" : [None], "Total price" : [total_price]})
+            self.payment_info = pd.concat([self.payment_info, new], ignore_index = True)
+        else:
+            try:
+                card_info = card_or_agencyID.get_info()
+            except:
+                return False, None
+
+            if (card_or_agencyID.pay(total_price)):
+                new = pd.DataFrame({"Booking reference" : [booking_reference], "Payment method" : [card_info[0]], "Owner name" : [card_info[1]], "Card id" : [card_info[2]], "Total price" : [total_price]})
+                self.payment_info = pd.concat([self.payment_info, new], ignore_index = True)
+            else:
+                return False, None
+
+        # 예약 명단 update
+        new = pd.DataFrame({"Reservation date" : [now_date], "Booking reference" : [booking_reference], "Out_bound_flight_id" : [out_bound_flight_id], "In_bound_flight_id" : [in_bound_flight_id]})  
         self.book_list = pd.concat([self.book_list, new], ignore_index = True)
 
         new = pd.DataFrame({"Booking reference" : [booking_reference for i in range(passenger_count)], "Name" : [t[0] for t in passengers_info], "Gender":[t[1] for t in passengers_info], "Date of birth":[t[2] for t in passengers_info]})
@@ -173,6 +201,30 @@ class AsianaAir_server:
 
         # 예약 성공 여부 반환
         return True, booking_reference
+    
+    # 예약 조회
+    def check_reservation(self, booking_reference):
+        if (not((self.book_list["Booking reference"] == booking_reference).any())):
+            return None, None, None
+
+        df = self.book_list
+        inner_reservation_info = df[df["Booking reference"] == booking_reference]
+        outer_reservation_info = pd.DataFrame(columns = ["Airline name", "Reservation date", "Booking reference", "Departure city", "Arrival city", "Round trip"])
+        departure_city = self.flight_schedule.iloc[inner_reservation_info["Out_bound_flight_id"]]["Departure city"].values[0]
+        arrival_city = self.flight_schedule.iloc[inner_reservation_info["Out_bound_flight_id"]]["Arrival city"].values[0]
+
+        new = pd.DataFrame({"Airline name" : ["아시아나 항공"], "Reservation date" : [inner_reservation_info["Reservation date"].values[0]], "Booking reference" : [booking_reference]
+                             ,"Departure city" : [departure_city], "Arrival city" : [arrival_city], "Round trip":[inner_reservation_info["In_bound_flight_id"].values[0] != None]})
+        
+        outer_reservation_info = pd.concat([outer_reservation_info, new], ignore_index = True)
+
+        df = self.peoples_list
+        passengers_info = df[df["Booking reference"] == booking_reference]
+
+        df = self.payment_info
+        payment_info = df[df["Booking reference"] == booking_reference]
+
+        return outer_reservation_info.to_dict('records'), passengers_info.to_dict('records'), payment_info.to_dict('records')
     
     # 취소
     def cancel_flight(self, booking_reference):
