@@ -45,7 +45,7 @@ print("예약 번호 : ", str(booking_reference2))
 
 
 # 예약 조회
-reservation_info, passengers_info, payment_info = korean_air.proxy_server.check_reservation(booking_reference2)
+reservation_info, passengers_info, payment_info = korean_air.proxy_server.check_reservation(booking_reference1)
 
 print(pd.DataFrame(reservation_info))
 print(pd.DataFrame(passengers_info))
