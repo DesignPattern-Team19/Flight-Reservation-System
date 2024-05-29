@@ -32,7 +32,7 @@
         return self.company_name, self.owner_name, self.card_id
     
     # 카드의 잔액을 반환
-    def get_balance(self) -> float:
+    def get_balance(self) -> int:
         return self.balance
 
     def __str__(self):
