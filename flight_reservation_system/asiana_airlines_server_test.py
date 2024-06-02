@@ -3,8 +3,8 @@ import pandas as pd
 import Card
 
 # 편도편 조회
-flight_ids1, flight_infos1 = asiana_air.proxy_server.check_flight_schedule_one_way("2024-07-01", "인천(ICN)", "토론토(YYZ)")
-flight_ids2, flight_infos2 = asiana_air.proxy_server.check_flight_schedule_one_way("2024-07-09", "로마(FCO)", "인천(ICN)")
+flight_ids1, flight_infos1 = asiana_air.proxy_server.check_flight_schedule_one_way("2024-07-01", "인천(ICN)", "토론토(YYZ)", 2)
+flight_ids2, flight_infos2 = asiana_air.proxy_server.check_flight_schedule_one_way("2024-07-09", "로마(FCO)", "인천(ICN)", 2)
 
 info_count = len(flight_ids1)
 for i in range(info_count):

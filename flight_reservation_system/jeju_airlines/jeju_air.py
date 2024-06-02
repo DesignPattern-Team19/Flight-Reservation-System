@@ -5,11 +5,11 @@ import os
 # 인터페이스니 무시해도 됨.
 class server(metaclass = ABCMeta):
     @abstractmethod
-    def query_flight_schedule_one_way(self, departure_date, departing_from, arriving_at):
+    def query_flight_schedule_one_way(self, departure_date, departing_from, arriving_at, passengers_count):
         pass
 
     @abstractmethod
-    def query_flight_schedule_round_trip(self, departure_date, return_date, departing_from, arriving_at):
+    def query_flight_schedule_round_trip(self, departure_date, return_date, departing_from, arriving_at, passengers_count):
         pass
 
     @abstractmethod
@@ -52,10 +52,10 @@ class Proxy_server(server):
     # 반환 : ([항공편 id, 항공편 id, ...], [{조회된 항공편 정보}, {조회된 항공편 정보}])
     # 반환 값은 리스트 2개로 구성된 tuple이며, 첫번째 리스트는 항공편 id들을 가지고, 두번째 리스트는 조회된 항공편 정보를 dict형태로 가지고 있다.
     # 반환 값으로 받은 조회된 항공편 정보를 보기 쉽게 dataframe으로 바꾸는 방법은 아래 테스트 코드를 참조하길 바란다.
-    def query_flight_schedule_one_way(self, departure_date, departing_from, arriving_at):
+    def query_flight_schedule_one_way(self, departure_date, departing_from, arriving_at, passengers_count):
         if (self.peak_season[0] <= departure_date and departure_date <= self.peak_season[1]):
             df = self.peak_season_flight_schedule
-            df = df.loc[(df['Date'] == departure_date) & (df['Departure city'] == departing_from) & (df['Arrival city'] == arriving_at)]
+            df = df.loc[(df['Date'] == departure_date) & (df['Departure city'] == departing_from) & (df['Arrival city'] == arriving_at) & (df["Remaining seats"] >= passengers_count)]
 
             if (df.empty):
                 return None, None
@@ -64,19 +64,19 @@ class Proxy_server(server):
         
         else:
             print("loading from main server")
-            return self.airlines_server.query_flight_schedule_one_way(departure_date, departing_from, arriving_at)
+            return self.airlines_server.query_flight_schedule_one_way(departure_date, departing_from, arriving_at, passengers_count)
 
     # 왕복편 조회 함수
     # 아직 이용하지 말 것.
-    def query_flight_schedule_round_trip(self, departure_date, return_date, departing_from, arriving_at):
+    def query_flight_schedule_round_trip(self, departure_date, return_date, departing_from, arriving_at, passengers_count):
         if (self.peak_season[0] <= departure_date and return_date <= self.peak_season[1]):
-            _, out_bound_flights = self.query_flight_schedule_one_way(departure_date, departing_from, arriving_at)
-            _, in_bound_flights = self.query_flight_schedule_one_way(return_date, arriving_at, departing_from)
+            _, out_bound_flights = self.query_flight_schedule_one_way(departure_date, departing_from, arriving_at, passengers_count)
+            _, in_bound_flights = self.query_flight_schedule_one_way(return_date, arriving_at, departing_from, passengers_count)
 
             # 반환값 고민중..
         else:
             print("loading from main server")
-            self.airlines_server.check_flight_schedule_round_trip(departure_date, return_date, departing_from, arriving_at)
+            self.airlines_server.check_flight_schedule_round_trip(departure_date, return_date, departing_from, arriving_at, passengers_count)
 
     # 항공편 예약 함수
     # 입력 : "out_bound_flight_id" = 가는 항공편의 id, "in_bound_flight_id" = 오는 항공편의 id, "passenger_count" = 승객 수, "passengers_info" = 승객 정보, "payment_method_or_agencyID" = 결제 수단'
@@ -124,9 +124,9 @@ class JejuAir_server:
         # 편도
             # 입력 : 가는날, 출발지, 도착지
             # 반환 : flight_id, 조회된 정보
-    def query_flight_schedule_one_way(self, departure_date, departing_from, arriving_at):
+    def query_flight_schedule_one_way(self, departure_date, departing_from, arriving_at, passengers_count):
         df = self.flight_schedule
-        df = df.loc[(df['Date']== departure_date) & (df['Departure city'] == departing_from) & (df['Arrival city'] == arriving_at)]
+        df = df.loc[(df['Date']== departure_date) & (df['Departure city'] == departing_from) & (df['Arrival city'] == arriving_at) & (df["Remaining seats"] >= passengers_count)]
 
         if (df.empty):
             return None, None
@@ -135,9 +135,9 @@ class JejuAir_server:
 
         # 왕복
             # 입력 : 가는날, 오는날
-    def query_flight_schedule_round_trip(self, departure_date, return_date, departing_from, arriving_at):
-        _, out_bound_flights = self.query_flight_schedule_one_way(departure_date, departing_from, arriving_at)
-        _, in_bound_flights = self.query_flight_schedule_one_way(return_date, arriving_at, departing_from)
+    def query_flight_schedule_round_trip(self, departure_date, return_date, departing_from, arriving_at, passengers_count):
+        _, out_bound_flights = self.query_flight_schedule_one_way(departure_date, departing_from, arriving_at, passengers_count)
+        _, in_bound_flights = self.query_flight_schedule_one_way(return_date, arriving_at, departing_from, passengers_count)
 
         # 반환값 고민중..
 

@@ -3,8 +3,8 @@ import pandas as pd
 import Card
 
 # 편도편 조회
-flight_ids1, flight_infos1 = jeju_air.proxy_server.query_flight_schedule_one_way("2024-07-03", "인천(ICN)", "타이페이(TPE)")
-flight_ids2, flight_infos2 = jeju_air.proxy_server.query_flight_schedule_one_way("2024-07-09", "타이페이(TPE)", "부산(PUS)") # 반환 값 : None, None (검색 조건에 일치하는 결과 없음)
+flight_ids1, flight_infos1 = jeju_air.proxy_server.query_flight_schedule_one_way("2024-07-03", "인천(ICN)", "타이페이(TPE)", 2)
+flight_ids2, flight_infos2 = jeju_air.proxy_server.query_flight_schedule_one_way("2024-07-09", "타이페이(TPE)", "부산(PUS)", 2) # 반환 값 : None, None (검색 조건에 일치하는 결과 없음)
 
 info_count = len(flight_ids1)
 for i in range(info_count):
