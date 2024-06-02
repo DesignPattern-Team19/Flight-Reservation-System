@@ -47,7 +47,7 @@ def check_all_flight_schedule_round_trip(departure_date, return_date, departing_
     return out_bound_flights, in_bound_flights, flight_combination_list
 
 class PassengersInfoAndPayment:
-    def __init__(self, out_bound_airline_name, out_bound_flight_id, in_bound_airline_name, in_bound_flight_id, passengers_count, price):
+    def __init__(self, out_bound_airline_name, out_bound_flight_id, in_bound_airline_name, in_bound_flight_id, price, passengers_count):
         self.out_bound_airline_name = out_bound_airline_name
         self.out_bound_flight_id = out_bound_flight_id
         self.in_bound_airline_name = in_bound_airline_name
@@ -82,7 +82,7 @@ class PassengersInfoAndPayment:
         elif self.out_bound_airline_name == "대한 항공":
             t_or_f, out_bound_booking_reference = korean_air.proxy_server.book_flight(self.out_bound_flight_id, None, self.passengers_count, self.passengers_info, self.card)
 
-        if (t_or_f == False):
+        if (t_or_f == False): # 일어나서는 안되는 일
             return None, None, None, None        
         
         if (self.in_bound_airline_name != None):
@@ -108,9 +108,7 @@ class SORTING_TYPE(Enum):
     FLIGHT_TIME = 3
 
 class Flight_one_item:
-    def __init__(self, passengers_count, out_bound_flight_info, in_bound_flight_info = None):
-        self.passengers_count = passengers_count
-
+    def __init__(self, out_bound_flight_info, in_bound_flight_info = None):
         self.out_bound_airline_name = out_bound_flight_info["Airline name"]
         self.out_bound_flight_id = out_bound_flight_info["Flight id"]
         self.out_bound_flight_info = out_bound_flight_info
@@ -121,6 +119,9 @@ class Flight_one_item:
             self.in_bound_flight_id = in_bound_flight_info["Flight id"]
             self.price += in_bound_flight_info["Price(KRW)"]
         self.in_bound_flight_info = in_bound_flight_info
+
+    def is_round_trip(self):
+        return self.in_bound_flight_info != None
 
     def get_value_for_sorting(self, sorting_type : SORTING_TYPE):
         if (sorting_type == SORTING_TYPE.FLIGHT_TIME):
@@ -152,29 +153,24 @@ class Flight_one_item:
     def show(self):
         obinfo = self.out_bound_flight_info
         if (self.in_bound_flight_info == None):
-            print("--------------------------------------------------------------------------------------")
+            
             print("{0}     {1} {2} -> {3} {4}      {5}        {6}원(1인당)".format(self.out_bound_airline_name, obinfo["Departure city"], obinfo["Departure time"],  
                                                            obinfo["Arrival city"], obinfo["Arrival time"], obinfo["Flight time"], self.price))
-            print("--------------------------------------------------------------------------------------")
             print("")
         else:
             ibinfo = self.in_bound_flight_info
 
             if (obinfo["Airline name"] == ibinfo["Airline name"]):
-                print("--------------------------------------------------------------------------------------")
                 print("{0}     {1} {2} -> {3} {4}      {5}".format(self.out_bound_airline_name, obinfo["Departure city"], obinfo["Departure time"],  
                                                            obinfo["Arrival city"], obinfo["Arrival time"], obinfo["Flight time"]))
                 print("        {0} {1} -> {2} {3}      {4}        {5}원(1인당)".format(ibinfo["Departure city"], ibinfo["Departure time"],  
                                                            ibinfo["Arrival city"], ibinfo["Arrival time"], ibinfo["Flight time"], self.price))
-                print("--------------------------------------------------------------------------------------")
                 print("")
             else:
-                print("--------------------------------------------------------------------------------------")
                 print("{0}     {1} {2} -> {3} {4}      {5}".format(self.out_bound_airline_name, obinfo["Departure city"], obinfo["Departure time"],  
                                                            obinfo["Arrival city"], obinfo["Arrival time"], obinfo["Flight time"]))
                 print("{0}     {1} {2} -> {3} {4}      {5}        {6}원(1인당)".format(self.in_bound_airline_name, ibinfo["Departure city"], ibinfo["Departure time"],  
                                                            ibinfo["Arrival city"], ibinfo["Arrival time"], ibinfo["Flight time"], self.price))
-                print("--------------------------------------------------------------------------------------")
                 print("")
         
         # 가장 저렴한 결제수단과 가격 출력
@@ -182,16 +178,17 @@ class Flight_one_item:
     # def click()
     # 이 개체를 클릭시 카드사별 최저가격을 개체 형식으로 출력?
 
-    def click(self):
-        if (self.in_bound_flight_info == None):
-            return PassengersInfoAndPayment(self.out_bound_airline_name, self.out_bound_flight_id, None, None, self.passengers_count, self.price)
-        else:
-            return PassengersInfoAndPayment(self.out_bound_airline_name, self.out_bound_flight_id, self.in_bound_airline_name, self.in_bound_flight_id, self.passengers_count, self.price)
+    
 
 
 class Flight_item_list:
-    def __init__(self):
+    def __init__(self, departing_from, arriving_at, departure_date, return_date, passengers_count):
         self.flight_item_list = list()
+        self.departing_from = departing_from
+        self.arriving_at = arriving_at
+        self.departure_date = departure_date
+        self.return_date = return_date
+        self.passengers_count = passengers_count
 
     def add_item(self, flight_item):
         self.flight_item_list.append(flight_item)
@@ -199,25 +196,42 @@ class Flight_item_list:
     def show(self, sorting_type : SORTING_TYPE):
         self.flight_item_list.sort(key = lambda one_item: one_item.get_value_for_sorting(sorting_type))
         
+        print("--------------------------------------------------------------------------------------")
+        print("가는날 : ", self.departure_date, end = "")
+        if (self.return_date != None):
+            print("       오는날 : ", self.return_date, end = "")
+        else:
+            print("                ", end = "")
+
+        print("          성인 {0}명".format(self.passengers_count))
+        print("")
+
         for flight_one_item in self.flight_item_list:
             flight_one_item.show()
 
+        print("--------------------------------------------------------------------------------------")
+
     def click(self, index):
-        return self.flight_item_list[index]
+        item = self.flight_item_list[index]
+
+        if (item.is_round_trip()):
+            return PassengersInfoAndPayment(item.out_bound_airline_name, item.out_bound_flight_id, item.in_bound_airline_name, item.in_bound_flight_id, item.price, self.passengers_count)
+        else:
+            return PassengersInfoAndPayment(item.out_bound_airline_name, item.out_bound_flight_id, None, None, item.price, self.passengers_count)
 
 def get_flight_item_list(departure_date, return_date, departing_from, arriving_at, passengers_count):
-    flight_item_list = Flight_item_list()
+    flight_item_list = Flight_item_list(departing_from, arriving_at, departure_date, return_date, passengers_count)
 
     if (return_date == None):
         all_flight_schedule_one_way = check_all_flight_schedule_one_way(departure_date, departing_from, arriving_at, passengers_count)
 
         for flight_schedule in all_flight_schedule_one_way:
-            flight_item_list.add_item(Flight_one_item(passengers_count, flight_schedule))
+            flight_item_list.add_item(Flight_one_item(flight_schedule))
     else:
         out_bound_flights, in_bound_flights, combination_list = check_all_flight_schedule_round_trip(departure_date, return_date, departing_from, arriving_at, passengers_count)
 
         for combination in combination_list:
-            flight_item_list.add_item(Flight_one_item(passengers_count, out_bound_flights[combination[0]], in_bound_flights[combination[1]]))
+            flight_item_list.add_item(Flight_one_item(out_bound_flights[combination[0]], in_bound_flights[combination[1]]))
 
     return flight_item_list
 
@@ -230,15 +244,16 @@ flight_item_list1.show(SORTING_TYPE.PRICE)
 flight_item_list2 = get_flight_item_list("2024-07-04", "2024-07-09", "인천(ICN)", "로마(FCO)", 2)
 flight_item_list2.show(SORTING_TYPE.FLIGHT_TIME)
 
-flight_one_item = flight_item_list1.click(0)
-payment = flight_one_item.click()
+payment = flight_item_list1.click(0)
 
-passengers_info = [("Billy", "M", "1974-08-17"), ("watson", "M", "1960-04-19")]
+passengers_info = [("Billy", "M", "1974-08-17"), ("watson", "M", "1960-04-19")] # 반드시 승객수를 맞출것, 위 2와 passengers_info의 원소의 개수를 일치시켜야
 card = Card.Card("농협카드", "Billy")
 card.recharge(1000000)
 
 payment.setPassengers(passengers_info)
 payment.setPaymentMethod(card)
-print(payment.pay()) # 반드시 승객수를 맞출것, 위 2와 passengers_info의 원소의 개수를 일치시켜야
+result = payment.pay()
 
-
+print("예약 완료")
+print("가는편 : {0} 예약 번호 : {1}".format(result[0], result[1]))
+print("오는편 : {0} 예약 번호 : {1}".format(result[2], result[3]))
