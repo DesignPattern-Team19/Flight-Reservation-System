@@ -89,11 +89,11 @@ class PassengersInfoAndPayment:
             in_bound_booking_reference = None
 
             if self.out_bound_airline_name == "아시아나 항공":
-                t_or_f, in_bound_booking_reference = asiana_air.proxy_server.book_flight(self.in_bound_flight_id, None, self.passengers_count, self.passengers_info, self.card_name)
+                t_or_f, in_bound_booking_reference = asiana_air.proxy_server.book_flight(self.in_bound_flight_id, None, self.passengers_count, self.passengers_info, self.card)
             elif self.out_bound_airline_name == "제주 항공":
-                t_or_f, in_bound_booking_reference = jeju_air.proxy_server.book_flight(self.in_bound_flight_id, None, self.passengers_count, self.passengers_info, self.card_name)
+                t_or_f, in_bound_booking_reference = jeju_air.proxy_server.book_flight(self.in_bound_flight_id, None, self.passengers_count, self.passengers_info, self.card)
             elif self.out_bound_airline_name == "대한 항공":
-                t_or_f, in_bound_booking_reference = korean_air.proxy_server.book_flight(self.in_bound_flight_id, None, self.passengers_count, self.passengers_info, self.card_name)
+                t_or_f, in_bound_booking_reference = korean_air.proxy_server.book_flight(self.in_bound_flight_id, None, self.passengers_count, self.passengers_info, self.card)
 
             if (t_or_f == False):
                 return self.out_bound_airline_name, out_bound_booking_reference, None, None # 일어나서는 안되는 일
@@ -244,11 +244,11 @@ flight_item_list1.show(SORTING_TYPE.PRICE)
 flight_item_list2 = get_flight_item_list("2024-07-04", "2024-07-09", "인천(ICN)", "로마(FCO)", 2)
 flight_item_list2.show(SORTING_TYPE.FLIGHT_TIME)
 
-payment = flight_item_list1.click(0)
+payment = flight_item_list2.click(0)
 
 passengers_info = [("Billy", "M", "1974-08-17"), ("watson", "M", "1960-04-19")] # 반드시 승객수를 맞출것, 위 2와 passengers_info의 원소의 개수를 일치시켜야
 card = Card.Card("농협카드", "Billy")
-card.recharge(1000000)
+card.recharge(8000000)
 
 payment.setPassengers(passengers_info)
 payment.setPaymentMethod(card)
